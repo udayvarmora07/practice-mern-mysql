@@ -61,12 +61,12 @@ jobs:
           --query "Reservations[].Instances[].PrivateIpAddress" \
           --output text | tr -s '\t ' '\n' >> inventory.ini
           
-          # Add SSH configuration to inventory
+          # Add SSH configuration to inventory with bastion host
           echo "" >> inventory.ini
           echo "[ec2_instances:vars]" >> inventory.ini
           echo "ansible_user=ubuntu" >> inventory.ini
           echo "ansible_ssh_private_key_file=./ec2_key.pem" >> inventory.ini
-          echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
+          echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -i ./ec2_key.pem -W %h:%p ubuntu@${{ secrets.BASTION_HOST }}\"'" >> inventory.ini
     
     # Step 7: Set up Ansible inventory file
     - name: Set up Ansible inventory file
