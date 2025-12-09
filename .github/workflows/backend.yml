@@ -97,6 +97,12 @@ jobs:
                 force: yes
                 update: yes
                 accept_hostkey: yes
+            - name: Fix directory ownership
+              file:
+                path: /var/www/app
+                owner: ubuntu
+                group: ubuntu
+                recurse: yes
             - name: Install NPM dependencies
               become_user: ubuntu
               shell: |
