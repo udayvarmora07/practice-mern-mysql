@@ -98,13 +98,21 @@ jobs:
                 update: yes
                 accept_hostkey: yes
             - name: Install NPM dependencies
-              npm:
-                path: "/var/www/app/backend"
-                state: present
-            - name: Restart PM2 with ecosystem.config.js
-              command: pm2 restart ecosystem.config.js --update-env
+              shell: |
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                cd /var/www/app/backend
+                npm install
               args:
-                chdir: /var/www/app/backend
+                executable: /bin/bash
+            - name: Restart PM2 with ecosystem.config.js
+              shell: |
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                cd /var/www/app/backend
+                pm2 restart ecosystem.config.js --update-env
+              args:
+                executable: /bin/bash
         EOF
 
         ansible-playbook -i inventory.ini deploy-playbook.yml
