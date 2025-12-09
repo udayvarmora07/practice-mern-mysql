@@ -6,7 +6,8 @@ const getAllUsers = async (req, res) => {
         const [rows] = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
         res.json({
             success: true,
-            data: rows
+            data: rows,
+            message: 'Users fetched successfully'
         });
     } catch (error) {
         console.error('Error fetching users:', error);
