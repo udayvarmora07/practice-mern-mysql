@@ -74,6 +74,12 @@ jobs:
       run: |
         cat inventory.ini
     
+    # Step 7.5: Debug - Test bastion connection
+    - name: Test bastion SSH connection
+      run: |
+        echo "Testing SSH connection to bastion: ${{ secrets.BASTION_PUBLIC_IP }}"
+        ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -i ./ec2_key.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }} "echo 'Bastion connection successful'" || echo "Bastion connection failed"
+    
     # Step 8: Pull the latest code from GitHub on the EC2 instances using Ansible
     - name: Update code on EC2 instances
       run: |
