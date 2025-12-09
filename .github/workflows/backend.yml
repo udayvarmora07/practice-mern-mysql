@@ -94,10 +94,10 @@ jobs:
               npm:
                 path: "/var/www/app/backend"
                 state: present
-              working_dir: "/var/www/app/backend"
             - name: Restart PM2 with ecosystem.config.js
-              command: "pm2 restart ecosystem.config.js --update-env"
-              working_dir: "/var/www/app/backend"
+              command: pm2 restart ecosystem.config.js --update-env
+              args:
+                chdir: /var/www/app/backend
         EOF
 
         ansible-playbook -i inventory.ini deploy-playbook.yml
