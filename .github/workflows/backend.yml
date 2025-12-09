@@ -28,14 +28,24 @@ jobs:
         sudo apt update
         sudo apt install -y ansible
     
-    # Step 4: Install dependencies for npm
+    # Step 4: Set up SSH key for Ansible
+    - name: Set up SSH key
+      run: |
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ec2_key.pem
+        chmod 600 ec2_key.pem
+    
+    # Step 5: Install Node.js using nvm
     - name: Install Node.js and NPM
       run: |
-        curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-        sudo apt-get install -y nodejs
-        sudo apt-get install -y build-essential
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        nvm install 22.17.0
+        nvm use 22.17.0
+        node --version
+        npm --version
     
-    # Step 5: Fetch EC2 instances (Auto Scaling Group instances)
+    # Step 6: Fetch EC2 instances (Auto Scaling Group instances)
     - name: Fetch EC2 instances from Auto Scaling Group
       id: fetch_instances
       run: |
@@ -50,13 +60,20 @@ jobs:
           --region ap-south-1 \
           --query "Reservations[].Instances[].PrivateIpAddress" \
           --output text | tr -s '\t ' '\n' >> inventory.ini
+          
+          # Add SSH configuration to inventory
+          echo "" >> inventory.ini
+          echo "[ec2_instances:vars]" >> inventory.ini
+          echo "ansible_user=ubuntu" >> inventory.ini
+          echo "ansible_ssh_private_key_file=./ec2_key.pem" >> inventory.ini
+          echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
     
-    # Step 6: Set up Ansible inventory file
+    # Step 7: Set up Ansible inventory file
     - name: Set up Ansible inventory file
       run: |
         cat inventory.ini
     
-    # Step 7: Pull the latest code from GitHub on the EC2 instances using Ansible
+    # Step 8: Pull the latest code from GitHub on the EC2 instances using Ansible
     - name: Update code on EC2 instances
       run: |
         cat <<EOF > deploy-playbook.yml
@@ -85,7 +102,7 @@ jobs:
 
         ansible-playbook -i inventory.ini deploy-playbook.yml
 
-    # Step 8: Clean up any temporary files or artifacts if necessary
+    # Step 9: Clean up any temporary files or artifacts if necessary
     - name: Clean up
       run: |
-        rm -f deploy-playbook.yml inventory.ini
+        rm -f deploy-playbook.yml inventory.ini ec2_key.pem
