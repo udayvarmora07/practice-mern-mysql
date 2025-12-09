@@ -1,0 +1,91 @@
+name: EC2 Deploy with Ansible
+
+on:
+  push:
+    branches:
+      - main  # You can modify this to trigger on different branches if needed.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Step 1: Checkout the code repository
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    # Step 2: Set up AWS CLI for accessing EC2 instances
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    # Step 3: Install Ansible
+    - name: Install Ansible
+      run: |
+        sudo apt update
+        sudo apt install -y ansible
+    
+    # Step 4: Install dependencies for npm
+    - name: Install Node.js and NPM
+      run: |
+        curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+        sudo apt-get install -y build-essential
+    
+    # Step 5: Fetch EC2 instances (Auto Scaling Group instances)
+    - name: Fetch EC2 instances from Auto Scaling Group
+      id: fetch_instances
+      run: |
+        # Assuming you are using an Auto Scaling Group with tags to identify the instances
+          echo "[ec2_instances]" > inventory.ini
+          aws ec2 describe-instances \
+             --instance-ids $(aws autoscaling describe-auto-scaling-groups \
+             --region ap-south-1 \
+             --auto-scaling-group-names test-asg \
+             --query "AutoScalingGroups[].Instances[].InstanceId" \
+             --output text) \
+          --region ap-south-1 \
+          --query "Reservations[].Instances[].PrivateIpAddress" \
+          --output text | tr -s '\t ' '\n' >> inventory.ini
+    
+    # Step 6: Set up Ansible inventory file
+    - name: Set up Ansible inventory file
+      run: |
+        cat inventory.ini
+    
+    # Step 7: Pull the latest code from GitHub on the EC2 instances using Ansible
+    - name: Update code on EC2 instances
+      run: |
+        cat <<EOF > deploy-playbook.yml
+        ---
+        - name: Deploy code to EC2 instances
+          hosts: ec2_instances
+          become: yes
+          tasks:
+            - name: Pull latest code from GitHub
+              git:
+                repo: "https://github.com/udayvarmora07/practice-mern-mysql.git"
+                dest: "/var/www/app/"
+                version: "${GIT_BRANCH}"
+                force: yes
+                update: yes
+                accept_hostkey: yes
+            - name: Install NPM dependencies
+              npm:
+                path: "/var/www/app/backend"
+                state: present
+              working_dir: "/var/www/app/backend"
+            - name: Restart PM2 with ecosystem.config.js
+              command: "pm2 restart ecosystem.config.js --update-env"
+              working_dir: "/var/www/app/backend"
+        EOF
+
+        ansible-playbook -i inventory.ini deploy-playbook.yml
+
+    # Step 8: Clean up any temporary files or artifacts if necessary
+    - name: Clean up
+      run: |
+        rm -f deploy-playbook.yml inventory.ini
