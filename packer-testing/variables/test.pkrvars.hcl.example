@@ -1,0 +1,13 @@
+# =============================================================================
+# Test Variables Example
+# For Custom Base AMI
+# =============================================================================
+
+aws_region    = "ap-south-1"
+instance_type = "t3.micro"
+
+# REQUIRED: Your custom base AMI ID
+source_ami = "ami-xxxxxxxxxxxxxxxxx"
+
+# Set to false to create actual AMI
+skip_create_ami = true

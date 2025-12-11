@@ -42,3 +42,6 @@ coverage/
 *.local
 .cache/
 .temp/
+
+# GitHub Actions (kept in separate repo)
+.github/

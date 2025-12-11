@@ -1,0 +1,6 @@
+# Packer testing artifacts
+*.pkrvars.hcl
+packer-manifest.json
+*.log
+packer_cache/
+.packer.d/

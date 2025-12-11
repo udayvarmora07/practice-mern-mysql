@@ -1,0 +1,37 @@
+# Packer Gitignore
+# =================
+
+# Variable files (may contain sensitive data)
+*.pkrvars.hcl
+!*.pkrvars.hcl.example
+
+# Packer cache and plugins
+.packer.d/
+packer_cache/
+
+# Build artifacts
+packer-manifest.json
+*.box
+
+# Logs
+*.log
+crash.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-*
+
+# Local environment
+.env
+.env.local
