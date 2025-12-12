@@ -44,4 +44,4 @@ coverage/
 .temp/
 
 # GitHub Actions (kept in separate repo)
-.github/
+.github/workflows/packer-build.yml
